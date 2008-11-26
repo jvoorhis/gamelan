@@ -20,8 +20,8 @@ module Gamelan
     end
     
     # Add a new job to be performed at +time+.
-    def at(delay, &task)
-      @queue.push(Task.new(self, phase + delay.to_f, &task))
+    def at(delay, *params, &task)
+      @queue.push(Task.new(self, phase + delay.to_f, *params, &task))
     end
 
     def freeze(&block)

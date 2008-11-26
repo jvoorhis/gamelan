@@ -1,7 +1,9 @@
+require 'thread'
+require 'gamelan/task'
+
 module Gamelan
   class Scheduler
-    attr_accessor :tempo
-    attr_reader :rate, :queue, :thread
+    attr_reader :phase, :queue, :rate, :thread, :time
     
     def initialize(options = {})
       self.tempo = options.fetch(:tempo, 120)
@@ -10,15 +12,24 @@ module Gamelan
       @queue     = []
       @phase     = 0.0
       @origin    = @time = Time.now.to_f
+      @lock      = Mutex.new
       
       @thread = Thread.new do
         loop { dispatch; advance }
       end
     end
     
-    ### Add a new job to be performed at +time+.
-    def at(time, &task)
-      @queue.push([time.to_f, task])
+    # Add a new job to be performed at +time+.
+    def at(delay, &task)
+      @queue.push(Task.new(self, phase + delay.to_f, &task))
+    end
+
+    def freeze(&block)
+      @lock.synchronize(&block)
+    end
+    
+    def tempo
+      @tempo * 60.0
     end
     
     def tempo=(bpm)
@@ -28,19 +39,20 @@ module Gamelan
     private
       # Advance the internal clock time and spin until it is reached.
       def advance
-        @time += @rate
-        loop do
-          break if Time.now.to_f > @time
-          sleep(@sleep_for) # Don't saturate the CPU
+        @lock.synchronize do
+          @time += @rate
+          loop do
+            break if Time.now.to_f > @time
+            sleep(@sleep_for) # Don't saturate the CPU
+          end
         end
       end
       
       def dispatch
         @phase  += (@time - @origin) * @tempo
         @origin  = @time
-        ready, @queue = @queue.partition { |time, task| time <= @phase }
-        ready.each { |time, task| task.call(time) }
+        ready, @queue = @queue.partition { |task| task.delay <= @phase }
+        ready.each { |task| task.run }
       end
   end
 end
-

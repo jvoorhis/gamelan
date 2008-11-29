@@ -13,7 +13,7 @@ end
 
 scheduler.run
 sleep(ARGV.shift || 1.01).to_i
-scheduler.thread.kill
+scheduler.stop
 
 error  = samples.map { |(l,c)| (c.to_f - l) * 1000 }
 mean   = (error.inject(0) { |a,b| a + b } / error.size)

@@ -1,5 +1,6 @@
 require 'thread'
-require 'gamelan/task'
+require 'priority_queue/c_priority_queue'
+require 'priority_queue'
 
 module Gamelan
   class Scheduler
@@ -9,19 +10,32 @@ module Gamelan
       self.tempo = options.fetch(:tempo, 120)
       @rate      = options.fetch(:rate, 0.001)
       @sleep_for = rate / 10.0
-      @queue     = []
-      @phase     = 0.0
-      @origin    = @time = Time.now.to_f
+      @queue     = PriorityQueue.new
       @lock      = Mutex.new
-      
-      @thread = Thread.new do
+    end
+    
+    def run
+      return if @running
+      @running  = true
+      @thread   = Thread.new do
+        @phase  = 0.0
+        @origin = @time = Time.now.to_f
         loop { dispatch; advance }
       end
     end
     
+    def stop
+      @running = false
+      
+      @thread.kill
+      @thread  = nil
+      @origin  = @time = @phase = nil
+    end
+    
     # Add a new job to be performed at +time+.
     def at(delay, *params, &task)
-      @queue.push(Task.new(self, phase + delay.to_f, *params, &task))
+      @queue.push(Task.new(self, delay.to_f, *params, &task),
+                  delay.to_f)
     end
 
     def freeze(&block)
@@ -42,7 +56,7 @@ module Gamelan
         @lock.synchronize do
           @time += @rate
           loop do
-            break if Time.now.to_f > @time
+            break if Time.now.to_f >= @time
             sleep(@sleep_for) # Don't saturate the CPU
           end
         end
@@ -51,8 +65,9 @@ module Gamelan
       def dispatch
         @phase  += (@time - @origin) * @tempo
         @origin  = @time
-        ready, @queue = @queue.partition { |task| task.delay <= @phase }
-        ready.each { |task| task.run }
+        while @queue.min && @queue.min[1] < @phase
+          @queue.delete_min[0].run
+        end
       end
   end
 end

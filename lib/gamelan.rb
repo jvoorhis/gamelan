@@ -5,7 +5,9 @@
 #
 # This code released under the terms of the MIT license.
 
+require 'rubygems'
 require 'gamelan/scheduler'
+require 'gamelan/task'
 
 class Object
   

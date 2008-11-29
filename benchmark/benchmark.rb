@@ -22,7 +22,7 @@ var    = (deriv.inject(0) { |a,b| a + b } / deriv.size)
 stddev = Math.sqrt(var)
 
 puts "sample size\t\t%i"          % samples.size
-puts "average error\t\t%.5fms"    % (error.inject(0) { |a,b| a + b } / error.size)
-puts "peak error\t\t%.5fms"       % error.max
+puts "average jitter\t\t%.5fms"   % (error.inject(0) { |a,b| a + b } / error.size)
+puts "peak jitter\t\t%.5fms"      % error.max
 puts "standard deviation\t%.5fms" % stddev
 #puts error.map { |sec| sprintf("%2.3fms", sec) }

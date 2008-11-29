@@ -1,0 +1,27 @@
+= Gamelan
+
+Gamelan is a good-enough soft real-time event scheduler especially for music
+applications. It exposes a simple API for executing Ruby code at a required
+time. Uses include sending MIDI or OSC messages to external applications or
+hardware.
+
+Gamelan also makes life easier by supporting logical time. Logical time is
+reflected in the scheduler's phase. The unit in logical time is the beat, and
+the Scheduler's phase will increment by 1.0 with every beat.
+
+Logical time varies with real time according to the tempo, which is specified
+in bpm. For example, the Scheduler's phase will increment by 2.0 for every
+second that elapses when using the default tempo of 120bpm. Applications are
+free to alter the tempo at any time, including from within tasks.
+
+= Notes
+
+The author admits that Ruby is not at all friendly to realtime applications.
+No guarantees are made about the scheduler's performance. It will not drift
+(it will always stay in sync with the system clock), but jitter is inevitable.
+This is minimized by using a hybrid spinlock implementation to wait between
+dispatches, and by using a reasonably efficient priority queue to store Tasks.
+
+The design is an elaboration of Topher Cyll's Timer implementation from his
+book, <em>Practical Ruby Projects</em>, and the Priority Queue implementation
+comes from Brian Amberg.

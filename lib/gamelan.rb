@@ -9,7 +9,7 @@ require 'rubygems'
 require 'gamelan/scheduler'
 require 'gamelan/task'
 
-class Object
+class Object # :nodoc:
   
   unless methods.include?('instance_exec')
     # Like instace_eval but allows parameters to be passed.

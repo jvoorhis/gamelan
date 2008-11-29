@@ -1,19 +1,22 @@
-require 'thread'
-require 'priority_queue/c_priority_queue'
-require 'priority_queue'
+require 'gamelan/queue'
 
 module Gamelan
+  # The scheduler is responsible for scheduling tasks and running them as accurately as possible.
   class Scheduler
-    attr_reader :phase, :queue, :rate, :thread, :time
+    attr_reader :phase, :rate, :time
     
+    # Construct a new scheduler. +Scheduler#run+ must be called explicitly once a Scheduler is created. Accepts two options, +:tempo+ and +:rate+.
+    # [+:tempo+] The tempo's scheduler, in bpm. For example, at +:tempo => 120+, the scheduler's logical +phase+ will advance by 2.0 every 60 seconds.
+    # [+:rate+]  Frequency in Hz at which the scheduler will attempt to run ready tasks. For example, The scheduler will poll for tasks 100 times in one
+    #            second when +:rate+ is 100.
     def initialize(options = {})
       self.tempo = options.fetch(:tempo, 120)
-      @rate      = options.fetch(:rate, 0.001)
+      @rate      = 1.0 / options.fetch(:rate, 1000)
       @sleep_for = rate / 10.0
-      @queue     = PriorityQueue.new
-      @lock      = Mutex.new
+      @queue     = Gamelan::Queue.new(self)
     end
     
+    # Initialize the scheduler's clock, and begin executing tasks.
     def run
       return if @running
       @running  = true
@@ -24,50 +27,39 @@ module Gamelan
       end
     end
     
+    # Halt the scheduler. Note that the scheduler is not yet resumable.
     def stop
       @running = false
-      
       @thread.kill
-      @thread  = nil
-      @origin  = @time = @phase = nil
     end
     
-    # Add a new job to be performed at +time+.
+    # Schedule a task to be performed at +delay+ beats.
     def at(delay, *params, &task)
-      @queue.push(Task.new(self, delay.to_f, *params, &task),
-                  delay.to_f)
-    end
-
-    def freeze(&block)
-      @lock.synchronize(&block)
+      @queue << Task.new(self, delay.to_f, *params, &task)
     end
     
+    # Current tempo, in bpm.
     def tempo
       @tempo * 60.0
     end
     
+    # Set the tempo in bpm.
     def tempo=(bpm)
       @tempo = bpm / 60.0
     end
     
     private
-      # Advance the internal clock time and spin until it is reached.
+      # Advances the internal clock time and spins until it is reached.
       def advance
-        @lock.synchronize do
-          @time += @rate
-          loop do
-            break if Time.now.to_f >= @time
-            sleep(@sleep_for) # Don't saturate the CPU
-          end
-        end
-      end
-      
-      def dispatch
+        @time   += @rate
         @phase  += (@time - @origin) * @tempo
         @origin  = @time
-        while @queue.min && @queue.min[1] < @phase
-          @queue.delete_min[0].run
-        end
+        sleep(@sleep_for) until Time.now.to_f >= @time
+      end
+      
+      # Run all ready tasks.
+      def dispatch
+        @queue.pop.run while @queue.ready?
       end
   end
 end

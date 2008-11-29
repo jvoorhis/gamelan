@@ -27,7 +27,8 @@ module Gamelan
       end
     end
     
-    # Halt the scheduler. Note that the scheduler is not yet resumable.
+    # Halt the scheduler. Note that the scheduler may be restarted, but is
+    # not resumable.
     def stop
       @running = false
       @thread.kill

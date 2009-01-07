@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'gamelan'
-  s.version = '0.1'
+  s.version = '0.2'
   s.summary = "Gamelan is a good-enough soft real-time event scheduler, written in Ruby, especially for music applications."
   
   s.add_dependency('PriorityQueue', '>= 0.1.2')

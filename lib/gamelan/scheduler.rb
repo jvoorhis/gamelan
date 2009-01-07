@@ -48,6 +48,8 @@ module Gamelan
     def tempo=(bpm)
       @tempo = bpm / 60.0
     end
+
+    def join; @thread.join end
     
     private
       # Advances the internal clock time and spins until it is reached.

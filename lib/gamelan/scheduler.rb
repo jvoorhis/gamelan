@@ -3,6 +3,11 @@ require 'gamelan/queue'
 module Gamelan
   # The scheduler is responsible for scheduling tasks and running them as accurately as possible.
   class Scheduler
+    include Java
+    include_package 'java.util.concurrent'
+    include_package 'java.lang'
+    JavaThread = java.lang.Thread
+    
     attr_reader :phase, :rate, :time
     
     # Construct a new scheduler. +Scheduler#run+ must be called explicitly once a Scheduler is created. Accepts two options, +:tempo+ and +:rate+.
@@ -11,9 +16,10 @@ module Gamelan
     #            second when +:rate+ is 100.
     def initialize(options = {})
       self.tempo = options.fetch(:tempo, 120)
-      @rate      = 1.0 / options.fetch(:rate, 1000)
-      @sleep_for = rate / 10.0
+      @rate      = (1.0 / options.fetch(:rate, 1000)) * 10 ** 9
       @queue     = Gamelan::Queue.new(self)
+      @work      = LinkedBlockingQueue.new
+      @worker    = Thread.new { loop { @work.take.run } }
     end
     
     # Initialize the scheduler's clock, and begin executing tasks.
@@ -22,7 +28,7 @@ module Gamelan
       @running  = true
       @thread   = Thread.new do
         @phase  = 0.0
-        @origin = @time = Time.now.to_f
+        @origin = @time = System.nano_time
         loop { dispatch; advance }
       end
     end
@@ -50,17 +56,17 @@ module Gamelan
     end
     
     private
-      # Advances the internal clock time and spins until it is reached.
+      # Advances the internal clock time and busywaits until it is reached.
       def advance
         @time   += @rate
         @phase  += (@time - @origin) * @tempo
         @origin  = @time
-        sleep(@sleep_for) until Time.now.to_f >= @time
+        JavaThread.yield until System.nano_time >= time
       end
       
       # Run all ready tasks.
       def dispatch
-        @queue.pop.run while @queue.ready?
+        @work.put(@queue.pop) while @queue.ready?
       end
   end
 end

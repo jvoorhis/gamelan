@@ -5,6 +5,11 @@
 #
 # This code released under the terms of the MIT license.
 
+def jruby?
+  defined?(JRUBY_VERSION)
+end
+
 require 'rubygems'
 require 'gamelan/scheduler'
 require 'gamelan/task'
+

@@ -5,7 +5,7 @@ Gem::Specification.new do |s|
   
   s.platform = defined?(JRUBY_VERSION) ? 'java' : 'ruby'
   
-  s.add_dependency('PriorityQueue', '>= 0.1.2') if defined?(JRUBY_VERSION)
+  s.add_dependency('PriorityQueue', '>= 0.1.2') unless defined?(JRUBY_VERSION)
   s.files = Dir['lib/**/*rb']
   s.require_path = 'lib'
   

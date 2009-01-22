@@ -4,22 +4,21 @@ module Gamelan
     
     class Queue
       include Java
-      include_package 'java.util.concurrent'
+      include_package 'java.util'
       
       def initialize(sched)
         @scheduler = sched
         comparator = lambda { |a,b| a.delay <=> b.delay }
-        @queue     = PriorityBlockingQueue.new(10000, &comparator)
-        @lock      = Mutex.new
+        @queue     = PriorityQueue.new(10000, &comparator)
       end
       
       def push(task)
-        @lock.synchronize { @queue.add(task) }
+        @queue.add(task)
       end
       alias << push
       
       def pop
-        @lock.synchronize { @queue.remove }
+        @queue.remove
       end
       
       def ready?

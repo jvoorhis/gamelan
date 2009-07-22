@@ -11,8 +11,8 @@ module Gamelan
     # [+:rate+]  Frequency in Hz at which the scheduler will dispatch.
     def initialize(options = {})
       self.tempo = options.fetch(:tempo, 120)
-      @rate      = 1.0 / options.fetch(:rate, 1000)
-      @sleep_for = rate / 10.0
+      @rate      = 1.0 / options.fetch(:rate, 440.0)
+      @sleep_for = rate / options.fetch(:granularity, 1.0)
     end
     
     # Initialize the scheduler's clock, and begin executing tasks.

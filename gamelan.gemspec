@@ -1,9 +1,11 @@
 Gem::Specification.new do |s|
   s.name = 'gamelan'
-  s.version = '0.2'
+  s.version = '0.3'
   s.summary = "Gamelan is a good-enough soft real-time event scheduler, written in Ruby, especially for music applications."
   
-  s.add_dependency('PriorityQueue', '>= 0.1.2')
+  s.platform = defined?(JRUBY_VERSION) ? 'java' : 'ruby'
+  
+  s.add_dependency('PriorityQueue', '>= 0.1.2') unless defined?(JRUBY_VERSION)
   s.files = Dir['lib/**/*rb']
   s.require_path = 'lib'
   

@@ -3,9 +3,9 @@ module Gamelan
   
   # MIDI priorities
   NOTEON_PRIORITY  = 0
-  NOTEOFF_PRIORITY = -1
-  CC_PRIORITY      = -2
-  PC_PRIORITY      = -3
+  CC_PRIORITY      = -1
+  PC_PRIORITY      = -2
+  NOTEOFF_PRIORITY = -3
   
   # A priority is a pair of (timestamp, level) with a lexicographical ordering.
   # The level is an Integer used to determine the order of execution of events

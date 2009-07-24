@@ -6,10 +6,11 @@ module Gamelan
       include Java
       include_package 'java.util'
       
-      def initialize(sched)
-        @scheduler = sched
-        comparator = lambda { |a,b| a.delay <=> b.delay }
-        @queue     = PriorityQueue.new(10000, &comparator)
+      def initialize(scheduler)
+        @scheduler = scheduler
+        @queue     = PriorityQueue.new(10000) { |a,b|
+                       a.priority <=> b.priority
+                     }
       end
       
       def push(task)
@@ -22,7 +23,11 @@ module Gamelan
       end
       
       def ready?
-        @queue.peek && @queue.peek.delay < @scheduler.phase
+        if top = @queue.peek
+          top.delay < @scheduler.phase
+        else
+          false
+        end
       end
     end
     
@@ -38,7 +43,7 @@ module Gamelan
       end
       
       def push(task)
-        @queue.push(task, task.delay)
+        @queue.push(task, task.priority)
       end
       alias << push
       
@@ -47,7 +52,11 @@ module Gamelan
       end
       
       def ready?
-        @queue.min && @queue.min[1] < @scheduler.phase
+        if top = @queue.min
+          top[1].time < @scheduler.phase
+        else
+          false
+        end
       end
     end
 

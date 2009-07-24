@@ -9,17 +9,27 @@ module Gamelan
   class Task
     extend Forwardable
     def_delegators :@scheduler, :at, :phase, :rate, :time
-    attr_reader :delay, :args, :scheduler
+    attr_reader :delay, :level, :priority, :args, :scheduler
     
-    # Construct a Task with a Scheduler reference, a delay in beats, an
-    # optional list of args, and a block.
-    def initialize(sched, delay, *args, &block)
-      @scheduler, @delay, @proc, @args = sched, delay, block, args
+    # Construct a Task from a block and an options Hash. Options are:
+    # [+:scheduler+] A reference to the scheduler.
+    # [+:delay+]     The logical time when the task will be run.
+    # [+:level+]     A level for determining the order of execution for events scheduled at the same time (optional).
+    # [+:args+]      Arguments that will be passed into the block (optional).
+    def initialize(options, &block)
+      @scheduler = options[:scheduler]
+      @delay     = options[:delay].to_f
+      @level     = options[:level] || DEFAULT_PRIORITY
+      @priority  = Priority.new(@delay, @level)
+      @proc      = block
+      @args      = options[:args] || []
     end
     
     # The scheduler will invoke Task#run is called with the Task's +delay+ at
     # the scheduled time. Any optional +args+, if given, will follow.
     # are yielded to the block.
-    def run; @proc[@delay, *@args] end
+    def run
+      @proc.call(@delay, *@args)
+    end
   end
 end

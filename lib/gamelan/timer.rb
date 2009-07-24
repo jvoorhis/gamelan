@@ -42,10 +42,13 @@ module Gamelan
     def tempo=(bpm)
       @tempo = bpm / 60.0
     end
-
-    def join; @thread.join end
     
-    private
+    # Block while the scheduler is running.
+    def join
+      @thread.join
+    end
+    
+    protected
       # Advances the internal clock time and spins until it is reached.
       def advance
         @time   += @rate
@@ -54,7 +57,7 @@ module Gamelan
         sleep(@sleep_for) until Time.now.to_f >= @time
       end
       
-      # Run all ready tasks.
+      # Subclasses must override Timer#dispatch.
       def dispatch
         raise NotImplementedError, "subclass responsibility"
       end

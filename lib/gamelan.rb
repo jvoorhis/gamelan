@@ -10,6 +10,8 @@ def jruby?
 end
 
 require 'rubygems'
+require 'gamelan/timer'
+require 'gamelan/queue'
 require 'gamelan/scheduler'
+require 'gamelan/priority'
 require 'gamelan/task'
-
